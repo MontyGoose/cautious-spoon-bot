@@ -7,18 +7,32 @@ var apiaiRecognizer = require('./apiai_recognizer');
 var connector = new builder.ChatConnector({appId: process.env.MICROSOFT_APP_ID, appPassword: process.env.MICROSOFT_APP_PASSWORD});
 
 // Receive messages from the user and respond by echoing each message back (prefixed with 'You said:')
-var bot = new builder.UniversalBot(connector, function(session) {
-  session.beginDialog('greetings');
+var bot = new builder.UniversalBot(connector, {
+    persistConversationData: true
 });
 
-bot.dialog('greetings', [
-    function (session) {
-        builder.Prompts.text(session, 'Hi! What is your name?');
-    },
-    function (session, results) {
-        session.endDialog(`Hello ${results.response}!`);
+var intents = new builder.IntentDialog({
+    recognizers: [
+        apiaiRecognizer
+    ],
+    intentThreshold: 0.2,
+    recognizeOrder: builder.RecognizeOrder.series
+});
+
+intents.matches('Payment Status', '/payment.status');
+
+
+bot.dialog('/', intents);
+
+
+
+bot.dialog('/payment.status', [
+    function(session, args, next) {
+      console.log(args);
+        session.endDialog('Thank you for enquiring about your payment status.');
     }
 ]);
+
 
 // Setup Restify Server
 var server = restify.createServer();
